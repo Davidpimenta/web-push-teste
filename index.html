@@ -59,7 +59,10 @@
       async function subscribeUser() {
         try {
           if ('serviceWorker' in navigator) {
-            const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            // Atualizando o caminho do Service Worker para o GitHub Pages
+            const register = await navigator.serviceWorker.register('./sw.js', {
+              scope: './'
+            });
             console.log('Service Worker registrado');
 
             const subscription = await register.pushManager.subscribe({

@@ -59,11 +59,21 @@
       async function subscribeUser() {
         try {
           if ('serviceWorker' in navigator) {
-            // Atualizando o caminho do Service Worker para o GitHub Pages
-            const register = await navigator.serviceWorker.register('https://davidpimenta.github.io/web-push-teste/sw.js', {
-              scope: 'https://davidpimenta.github.io/web-push-teste/'
+            // Primeiro, vamos remover qualquer Service Worker existente
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            for(let registration of registrations) {
+              await registration.unregister();
+            }
+
+            // Agora vamos registrar o novo Service Worker
+            const register = await navigator.serviceWorker.register('/web-push-teste/sw.js', {
+              scope: '/web-push-teste/'
             });
             console.log('Service Worker registrado');
+
+            // Aguardar o Service Worker estar ativo
+            await navigator.serviceWorker.ready;
+            console.log('Service Worker está ativo');
 
             const subscription = await register.pushManager.subscribe({
               userVisibleOnly: true,

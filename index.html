@@ -36,7 +36,7 @@
     <button id="send">Enviar Notificação</button>
 
     <script>
-      const publicVapidKey = 'BH9jm_UpkunhdOHIwMeQZOLwltuKy34mqAv4d8v2VBKJ3ryU877QF64rEqXzcxSGdhhVH1bG_JoJMAUh0SlE22o';
+      const publicVapidKey = 'w1vezjr9tKKlk4lJWvCQo3qjwg3f5yppRHdrpgS596Q';
 
       // Configuração base do Axios
       const api = axios.create({
@@ -66,8 +66,8 @@
             }
 
             // Agora vamos registrar o novo Service Worker
-            const register = await navigator.serviceWorker.register('/web-push-teste/sw.js', {
-              scope: '/web-push-teste/'
+            const register = await navigator.serviceWorker.register('sw.js', {
+              scope: './'
             });
             console.log('Service Worker registrado');
 
@@ -77,7 +77,7 @@
 
             const subscription = await register.pushManager.subscribe({
               userVisibleOnly: true,
-              applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+              applicationServerKey: new urlBase64ToUint8Array(publicVapidKey)
             });
 
             console.log('Subscription:', subscription);

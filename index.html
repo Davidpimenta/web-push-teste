@@ -60,8 +60,8 @@
         try {
           if ('serviceWorker' in navigator) {
             // Atualizando o caminho do Service Worker para o GitHub Pages
-            const register = await navigator.serviceWorker.register('./sw.js', {
-              scope: './'
+            const register = await navigator.serviceWorker.register('https://davidpimenta.github.io/web-push-teste/sw.js', {
+              scope: 'https://davidpimenta.github.io/web-push-teste/'
             });
             console.log('Service Worker registrado');
 
@@ -73,7 +73,6 @@
             console.log('Subscription:', subscription);
 
             const body = JSON.stringify({subscription});
-
             const { data } = await api.post('/web-push', body);
             console.log('Response:', data);
 

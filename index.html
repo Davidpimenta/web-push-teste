@@ -66,8 +66,8 @@
             }
 
             // Agora vamos registrar o novo Service Worker
-            const register = await navigator.serviceWorker.register('sw.js', {
-              scope: './'
+            const register = await navigator.serviceWorker.register('/web-push-teste/sw.js', {
+              scope: '/web-push-teste/'
             });
             console.log('Service Worker registrado');
 

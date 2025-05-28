@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Web Push Notification Teste</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+      body {
+        background-color: #1a237e;
+        color: white;
+        font-family: Arial, sans-serif;
+        padding: 20px;
+        text-align: center;
+      }
+      button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        margin: 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      button:hover {
+        background-color: #45a049;
+      }
+      h1 {
+        margin-bottom: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Web Push Notification</h1>
+    <button id="subscribe">Ativar Notificações</button>
+    <button id="send">Enviar Notificação</button>
+
+    <script>
+      const publicVapidKey = 'BH9jm_UpkunhdOHIwMeQZOLwltuKy34mqAv4d8v2VBKJ3ryU877QF64rEqXzcxSGdhhVH1bG_JoJMAUh0SlE22o';
+
+      // Configuração base do Axios
+      const api = axios.create({
+        baseURL: 'https://american-swipe-develop.up.railway.app',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        }
+      });
+
+      // Função para converter a chave pública
+      function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        return Uint8Array.from([...rawData].map(char => char.charCodeAt(0)));
+      }
+
+      // Função para ativar as notificações
+      async function subscribeUser() {
+        try {
+          if ('serviceWorker' in navigator) {
+            const register = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+            console.log('Service Worker registrado');
+
+            const subscription = await register.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+            });
+
+            console.log('Subscription:', subscription);
+
+            const body = JSON.stringify({subscription});
+
+            const { data } = await api.post('/web-push', body);
+            console.log('Response:', data);
+
+            alert('Inscrito com sucesso para notificações!');
+          } else {
+            alert('Service Worker não suportado no navegador.');
+          }
+        } catch (error) {
+          console.error('Erro ao registrar:', error);
+          const errorMessage = error.response?.data?.message || error.message;
+          alert('Erro ao registrar notificações: ' + errorMessage);
+        }
+      }
+
+      // Função para disparar notificação
+      async function sendNotification() {
+        try {
+          const { data } = await api.post('/send-notification');
+          console.log('Notificação enviada:', data);
+          alert('Notificação enviada com sucesso!');
+        } catch (error) {
+          console.error('Erro ao enviar notificação:', error);
+          const errorMessage = error.response?.data?.message || error.message;
+          alert('Erro ao enviar notificação: ' + errorMessage);
+        }
+      }
+
+      document.getElementById('subscribe').addEventListener('click', subscribeUser);
+      document.getElementById('send').addEventListener('click', sendNotification);
+    </script>
+  </body>
+</html>

@@ -22,16 +22,31 @@
         cursor: pointer;
         font-size: 16px;
       }
-      button:hover {
-        background-color: #45a049;
+      button:hover { background-color: #45a049; }
+      button:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
       }
-      h1 {
-        margin-bottom: 30px;
+      h1 { margin-bottom: 30px; }
+      #status {
+        margin: 20px;
+        padding: 10px;
+        border-radius: 4px;
+      }
+      .status-denied {
+        background-color: #f44336;
+      }
+      .status-granted {
+        background-color: #4caf50;
+      }
+      .status-default {
+        background-color: #ff9800;
       }
     </style>
   </head>
   <body>
     <h1>Web Push Notification</h1>
+    <div id="status"></div>
     <button id="subscribe">Ativar Notificações</button>
     <button id="send">Enviar Notificação</button>
 
@@ -43,9 +58,48 @@
         baseURL: 'https://american-swipe-develop.up.railway.app',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json'
+          'Accept': 'application/json',
+          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImZiNjBhNmMxLWUxYzctNGU3Yi1hNDJmLTcyM2Y1ZTk0MDkwMSIsImVtYWlsIjoiYW1lcmljYW5yb290QHJvb3QuY29tIiwicm9sZSI6IlJPT1QiLCJpYXQiOjE3NDg0NjkzMDIsImV4cCI6MTc0ODU1NTcwMn0.xOr8A5LmW8q1aslZX-lnrPCxTxHzLYueV0my0pSS0q0'
         }
       });
+
+      // Função para atualizar o status das notificações
+      function updateNotificationStatus() {
+        const statusDiv = document.getElementById('status');
+        const subscribeButton = document.getElementById('subscribe');
+        const sendButton = document.getElementById('send');
+
+        if (!('Notification' in window)) {
+          statusDiv.textContent = 'Notificações não são suportadas neste navegador';
+          statusDiv.className = 'status-denied';
+          subscribeButton.disabled = true;
+          sendButton.disabled = true;
+          return;
+        }
+
+        switch(Notification.permission) {
+          case 'granted':
+            statusDiv.textContent = 'Notificações ativadas';
+            statusDiv.className = 'status-granted';
+            subscribeButton.style.display = 'none';
+            sendButton.disabled = false;
+            break;
+          case 'denied':
+            statusDiv.textContent = 'Notificações bloqueadas. Por favor, ative nas configurações do navegador.';
+            statusDiv.className = 'status-denied';
+            subscribeButton.textContent = 'Tentar Novamente';
+            subscribeButton.style.display = 'inline-block';
+            sendButton.disabled = true;
+            break;
+          case 'default':
+            statusDiv.textContent = 'Notificações não configuradas';
+            statusDiv.className = 'status-default';
+            subscribeButton.textContent = 'Ativar Notificações';
+            subscribeButton.style.display = 'inline-block';
+            sendButton.disabled = true;
+            break;
+        }
+      }
 
       // Função para converter a chave pública
       function urlBase64ToUint8Array(base64String) {
@@ -70,6 +124,12 @@
       async function subscribeUser() {
         try {
           if ('serviceWorker' in navigator) {
+            // Solicitar permissão primeiro
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+              throw new Error('Permissão de notificação negada');
+            }
+
             console.log('Iniciando registro do Service Worker...');
 
             // Primeiro, vamos remover qualquer Service Worker existente
@@ -80,9 +140,10 @@
             console.log('Service Workers antigos removidos');
 
             // Agora vamos registrar o novo Service Worker
-            const register = await navigator.serviceWorker.register('/web-push-teste/sw.js', {
-              scope: '/web-push-teste/'
+            const register = await navigator.serviceWorker.register('/sw.js', {
+              scope: './'
             });
+
             console.log('Service Worker registrado');
 
             // Aguardar o Service Worker estar ativo
@@ -110,6 +171,7 @@
             console.log('Resposta do servidor:', data);
 
             alert('Inscrito com sucesso para notificações!');
+            updateNotificationStatus();
           } else {
             alert('Service Worker não suportado no navegador.');
           }
@@ -117,6 +179,7 @@
           console.error('Erro detalhado:', error);
           const errorMessage = error.response?.data?.message || error.message;
           alert('Erro ao registrar notificações: ' + errorMessage);
+          updateNotificationStatus();
         }
       }
 
@@ -133,8 +196,21 @@
         }
       }
 
+      // Verificar status inicial
+      updateNotificationStatus();
+
+      // Adicionar listeners
       document.getElementById('subscribe').addEventListener('click', subscribeUser);
       document.getElementById('send').addEventListener('click', sendNotification);
+
+      // Verificar mudanças no status da permissão
+      if ('permissions' in navigator) {
+        navigator.permissions.query({ name: 'notifications' }).then(function(permissionStatus) {
+          permissionStatus.onchange = function() {
+            updateNotificationStatus();
+          };
+        });
+      }
     </script>
   </body>
 </html>
